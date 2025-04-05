@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"log"
-	"fmt"
+	//"fmt"
 	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/shayantrix/task_manager_api/pkg/router"
@@ -22,13 +22,13 @@ func main(){
 	//Serve the server
 	server := &http.Server{
 		Addr: ":"+ port,
-		Handler: r
+		Handler: r,
 	}
-	go func(){
+	//go func(){
 		if err := server.ListenAndServe(); err != nil{
 			log.Fatal(err)
 		}
-	}()
+	//}()
 	/*
 	// Server Shutdown
 	quit := make(chan os.Signal, 1)
