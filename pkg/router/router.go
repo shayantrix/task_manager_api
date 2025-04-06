@@ -7,6 +7,6 @@ import(
 
 var RoutingGroup = func(router *mux.Router){
 	router.HandleFunc("/health", controllers.Test).Methods("GET")
-	router.HandleFunc("/register", controllers.MakeHandler(controllers.Register)).Methods("POST")
+	router.HandleFunc("/register", controllers.Register).Methods("POST")
 }
 

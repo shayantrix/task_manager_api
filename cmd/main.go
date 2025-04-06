@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
-	"os/signal"
-	"syscall"
-	"time"
+	//"context"
+	//"os/signal"
+	//"syscall"
+	//"time"
 	"os"
 	"log"
 	//"fmt"
@@ -28,6 +28,12 @@ func main(){
 		Addr: ":"+ port,
 		Handler: r,
 	}
+
+	if err := server.ListenAndServe(); err != nil{
+                        log.Fatal(err)
+        }
+
+	/*
 	go func(){
 		if err := server.ListenAndServe(); err != nil{
 			log.Fatal(err)
@@ -46,7 +52,7 @@ func main(){
 		log.Fatal("Forced shutdown: ", err)
 	}
 	log.Println("Server stopped gracefully")
-
+	*/
 }
 
 
