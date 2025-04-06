@@ -17,6 +17,11 @@ type RegisterData struct{
         Pass string `json:"password"`
 }
 
+type DataWithoutPass struct{
+	Name string `json:"name"`
+	Email string `json:"email"`
+}
+
 var registerData []RegisterData	
 
 func Test(w http.ResponseWriter, r *http.Request) {
@@ -65,12 +70,14 @@ func Register(w http.ResponseWriter, r *http.Request){
 
 func GetUsers(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
-	/*params := mux.Vars(r)
-	name, err := strconv.ParseInt(params["name"], 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	}*/
-	json.NewEncoder(w).Encode(registerData)
+	var userResponse []DataWithoutPass
+	for _, v := range registerData{
+		userResponse = append(userResponse, DataWithoutPass{
+			Name: v.Name,
+			Email: v.Email,
+		})
+	}
+	json.NewEncoder(w).Encode(userResponse)
 }
 
 
