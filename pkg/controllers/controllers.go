@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/google/uuid"
 	"log"
 	"encoding/json"
 	"io"
@@ -12,6 +13,7 @@ import (
 )
 
 type RegisterData struct{
+	ID uuid.UUID    `json:"id"`
         Name string `json:"name"`
         Email string `json:"email"`
         Pass string `json:"password"`
@@ -51,6 +53,8 @@ func Register(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in decoding json file", err)
 	}
 
+	reg.ID = uuid.New()
+
 	if registerData == nil {
 		registerData = append(registerData, reg)
 	}else{
@@ -65,6 +69,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 			}
 		}
 	}
+	fmt.Println(reg.ID)
 	//registerData = append(registerData, reg)
 }
 
