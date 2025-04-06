@@ -1,6 +1,10 @@
 package main
 
 import (
+	"context"
+	"os/signal"
+	"syscall"
+	"time"
 	"os"
 	"log"
 	//"fmt"
@@ -24,15 +28,25 @@ func main(){
 		Addr: ":"+ port,
 		Handler: r,
 	}
-	//go func(){
+	go func(){
 		if err := server.ListenAndServe(); err != nil{
 			log.Fatal(err)
 		}
-	//}()
-	/*
+	}()
+	
 	// Server Shutdown
 	quit := make(chan os.Signal, 1)
-	*/
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit //wait here until interrupt
+
+	//start shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil{
+		log.Fatal("Forced shutdown: ", err)
+	}
+	log.Println("Server stopped gracefully")
+
 }
 
 

@@ -31,7 +31,6 @@ func Test(w http.ResponseWriter, r *http.Request) {
 
 //Register handler -> Register(w, r)
 func Register(w http.ResponseWriter, r *http.Request, reg *RegisterData){
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	
 	var registerData RegisterData
