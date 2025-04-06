@@ -4,6 +4,7 @@ import (
 	"log"
 	"encoding/json"
 	"io"
+	"fmt"
 	"net/http"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
@@ -36,15 +37,30 @@ func Test(w http.ResponseWriter, r *http.Request) {
 func Register(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	var reg RegisterData
-	//params := mux.Vars(r)
-	if err := json.NewDecoder(r.Body).Decode(&reg); err != nil{
+	
+	/*if err := json.NewDecoder(r.Body).Decode(&reg); err != nil{
 		log.Fatal(err)
+	}*/
+	body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &reg); err != nil{
+		log.Fatal("Error in decoding json file", err)
 	}
 
-	registerData = append(registerData, reg)
+	if registerData == nil {
+		registerData = append(registerData, reg)
+	}else{
 
-	json.NewEncoder(w).Encode(registerData)
-
+		for _, v := range registerData{
+			if v.Email == reg.Email{
+				fmt.Printf("This email already exists")
+			
+			}else{
+				registerData = append(registerData, reg)
+	
+			}
+		}
+	}
+	//registerData = append(registerData, reg)
 }
 
 func GetUsers(w http.ResponseWriter, r *http.Request){
