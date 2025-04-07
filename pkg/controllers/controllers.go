@@ -128,5 +128,12 @@ func Login(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
+	token, err := auth.JWTGenerate(reg.ID)
+	if err != nil {
+		log.Fatal("Error in jwt token generation: %s", err)
+	}
+	json.NewEncoder(w).Encode(token)
+
+	fmt.Printf("token: %s", token)
 	fmt.Printf("User %s Login secssussfully", reg.Name)
 }

@@ -1,6 +1,9 @@
 package auth
 
 import(
+	"time"
+	"github.com/google/uuid"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,7 +18,22 @@ func CheckHashedPassword(password, hash_password string) error{
 	}
 	return nil
 }
+
+var jwtKey = []byte("In the darkest night look for the light")
+
+func JWTGenerate(ID uuid.UUID) (string, error){
+	// Make jwt object token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": ID,
+		"exp": time.Now().Add(time.Hour*24).Unix(),
+	})
 	
+	jwt_string, err := token.SignedString(jwtKey)
+	if err != nil{
+		return "", err
+	}
+	return jwt_string, err
+}
 
 /*
 import(
