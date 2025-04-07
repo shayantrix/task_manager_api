@@ -7,52 +7,53 @@ import (
 	"io"
 	"fmt"
 	"net/http"
+	"golang.org/x/crypto/bcrypt"
+	//"github.com/shayantrix/task_manager_api/pkg/auth"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
 	//"github.com/gorilla/mux"
 )
 
 type RegisterData struct{
-	ID uuid.UUID    `json:"id"`
+        ID uuid.UUID    `json:"id"`
         Name string `json:"name"`
         Email string `json:"email"`
         Pass string `json:"password"`
 }
 
+type SecureAuth struct{
+        Email   string  `json:"email"`
+        Pass  []byte    `json:"-"`
+}
+
+var secureAuth []SecureAuth
+
+
 type DataWithoutPass struct{
-	Name string `json:"name"`
-	Email string `json:"email"`
+        Name string `json:"name"`
+        Email string `json:"email"`
 }
 
-var registerData []RegisterData	
+var registerData []RegisterData
 
-func Test(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-
-	// type Status struct{
-	// 	statusCode string `json:"status"`
-	// }
-
-	// s := Status{statusCode: "ok"}
-
-	// json.NewEncoder(w).Encode(s)
-	io.WriteString(w, "Hello World")
-}
+var HashedPasswords []byte
 
 //Register handler -> Register(w, r)
 func Register(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	var reg RegisterData
 	
-	/*if err := json.NewDecoder(r.Body).Decode(&reg); err != nil{
-		log.Fatal(err)
-	}*/
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &reg); err != nil{
 		log.Fatal("Error in decoding json file", err)
 	}
-
+	
+	var hash_err error
+	HashedPasswords, hash_err  =  bcrypt.GenerateFromPassword([]byte(reg.Pass), bcrypt.DefaultCost)
+	if hash_err != nil{
+		log.Fatal("Hashing error: ", hash_err)
+	}
+	
 	reg.ID = uuid.New()
 
 	if registerData == nil {
@@ -90,3 +91,60 @@ func GetUsers(w http.ResponseWriter, r *http.Request){
 	return func(w http.ResponseWriter, r *http.Request){
 	}
 }*/
+
+func EvaluatePass(reg *RegisterData)error{
+       /* //reg == ID, Name, Email, Pass
+        for _, v := range registerData{
+		var s []byte
+		var j []byte
+                s = append(s, (j, _ = bcrypt.GenerateFromPassword(v.Pass, bcrypt.DefaultCost)))
+		
+                secureAuth = append(secureAuth, SecureAuth{
+                        Email: v.Email,
+                        Pass: s,
+                })
+        }
+	*/
+
+        
+        //func CompareHashAndPassword(hashedPassword, password []byte) error
+	/*
+        for _, v := range secureAuth{
+                if err := bcrypt.CompareHashAndPassword(reg.Pass, HashedPasswords); err != nil{
+                        return err
+                }
+        }
+        return nil
+	*/
+
+	if err := bcrypt.CompareHashAndPassword(HashedPasswords, []byte(reg.Pass)); err != nil{
+		return err
+	}
+	return nil
+
+}
+
+
+func Login(w http.ResponseWriter, r *http.Request){
+	// User should put email and password
+	// We will check whether password matches the hashed one that we have in authentication
+	//If email does not exist Wont move further.
+	var reg RegisterData
+	body, _ := io.ReadAll(r.Body)
+
+	if err := json.Unmarshal(body, &reg); err != nil{
+		log.Fatal("Error in Decoding json: ", err)
+	}
+
+	for i, item := range registerData{
+		if item.Email != reg.Email{
+			log.Fatal("Email does not exists")
+		}
+
+		if err := EvaluatePass(&reg); err != nil{
+			log.Fatal("Password does not match! ", err)
+		}else{
+			json.NewEncoder(w).Encode(registerData[i])
+		}
+	}
+}
