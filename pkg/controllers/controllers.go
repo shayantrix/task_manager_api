@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
-	//"github.com/shayantrix/task_manager_api/pkg/auth"
+	"github.com/shayantrix/task_manager_api/pkg/auth"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
 	//"github.com/gorilla/mux"
@@ -92,37 +92,17 @@ func GetUsers(w http.ResponseWriter, r *http.Request){
 	}
 }*/
 
+/*
 func EvaluatePass(reg *RegisterData)error{
-       /* //reg == ID, Name, Email, Pass
-        for _, v := range registerData{
-		var s []byte
-		var j []byte
-                s = append(s, (j, _ = bcrypt.GenerateFromPassword(v.Pass, bcrypt.DefaultCost)))
-		
-                secureAuth = append(secureAuth, SecureAuth{
-                        Email: v.Email,
-                        Pass: s,
-                })
-        }
-	*/
-
-        
-        //func CompareHashAndPassword(hashedPassword, password []byte) error
-	/*
-        for _, v := range secureAuth{
-                if err := bcrypt.CompareHashAndPassword(reg.Pass, HashedPasswords); err != nil{
-                        return err
-                }
-        }
-        return nil
-	*/
-
+        //reg == ID, Name, Email, Pass
 	if err := bcrypt.CompareHashAndPassword(HashedPasswords, []byte(reg.Pass)); err != nil{
 		return err
 	}
 	return nil
 
 }
+*/
+
 
 
 func Login(w http.ResponseWriter, r *http.Request){
@@ -141,10 +121,12 @@ func Login(w http.ResponseWriter, r *http.Request){
 			log.Fatal("Email does not exists")
 		}
 
-		if err := EvaluatePass(&reg); err != nil{
+		if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
 			log.Fatal("Password does not match! ", err)
 		}else{
 			json.NewEncoder(w).Encode(registerData[i])
 		}
 	}
+
+	fmt.Printf("User %s Login secssussfully", reg.Name)
 }
