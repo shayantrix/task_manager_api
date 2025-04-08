@@ -72,6 +72,11 @@ func Register(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	fmt.Println(reg.ID)
+	token, err := tokens.JWTGenerate(reg.ID)
+        if err != nil {
+                log.Fatal("Error in jwt token generation: %s", err)
+        }
+        json.NewEncoder(w).Encode(token)
 	//registerData = append(registerData, reg)
 }
 
@@ -97,6 +102,9 @@ func Login(w http.ResponseWriter, r *http.Request){
 	// User should put email and password
 	// We will check whether password matches the hashed one that we have in authentication
 	//If email does not exist Wont move further.
+	
+	w.Header().Set("Content-Type", "application/json")
+	
 	var reg RegisterData
 	body, _ := io.ReadAll(r.Body)
 
@@ -104,7 +112,16 @@ func Login(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in Decoding json: ", err)
 	}
 
-	for i, item := range registerData{
+	for i, item := range registerData{		
+		// Use jwt token to login
+		userID := r.Context().Value("userID").(string)
+		if item.ID.String() == userID{
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(fmt.Sprintf(`{"userID": "%s"}`, userID)))
+			json.NewEncoder(w).Encode(registerData[i])
+			
+		}
+
 		if item.Email != reg.Email{
 			log.Fatal("Email does not exists")
 		}
@@ -115,13 +132,13 @@ func Login(w http.ResponseWriter, r *http.Request){
 			json.NewEncoder(w).Encode(registerData[i])
 		}
 	}
-
+	/*
 	token, err := tokens.JWTGenerate(reg.ID)
 	if err != nil {
 		log.Fatal("Error in jwt token generation: %s", err)
 	}
 	json.NewEncoder(w).Encode(token)
-
-	fmt.Printf("token: %s", token)
+	*/
+	//fmt.Printf("token: %s", token)
 	fmt.Printf("User %s Login secssussfully", reg.Name)
 }

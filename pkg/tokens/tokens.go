@@ -1,14 +1,15 @@
 package tokens
 
 import(
+	"os"
 	"fmt"
 	"log"
 	"time"
         "github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtKey = []byte("In the darkest night look for the light")
+//define it in env
+var jwtKey = []byte(os.Getenv("JWT_TOKEN"))
 
 
 //type CustomClaims struct{

@@ -41,7 +41,7 @@ func Authentication() http.HandlerFunc{
 		}
 		// If the token is valid, the user’s ID is stored in the Gin context for further use.
 		// Add claims to the request context
-		ctx := context.WithValue(r.Context(), "userClaims", claims)
+		ctx := context.WithValue(r.Context(), "userClaims", claims["user_id"])
 		//next.ServeHTTP(w, r.WithContext(ctx))
 		var next http.Handler
 		next.ServeHTTP(w, r.WithContext(ctx))
