@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	"github.com/google/uuid"
 	"log"
 	"encoding/json"
@@ -92,19 +93,6 @@ func GetUsers(w http.ResponseWriter, r *http.Request){
 	}
 }*/
 
-/*
-func EvaluatePass(reg *RegisterData)error{
-        //reg == ID, Name, Email, Pass
-	if err := bcrypt.CompareHashAndPassword(HashedPasswords, []byte(reg.Pass)); err != nil{
-		return err
-	}
-	return nil
-
-}
-*/
-
-
-
 func Login(w http.ResponseWriter, r *http.Request){
 	// User should put email and password
 	// We will check whether password matches the hashed one that we have in authentication
@@ -128,7 +116,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
-	token, err := auth.JWTGenerate(reg.ID)
+	token, err := tokens.JWTGenerate(reg.ID)
 	if err != nil {
 		log.Fatal("Error in jwt token generation: %s", err)
 	}
