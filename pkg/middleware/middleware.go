@@ -44,22 +44,7 @@ func Authentication(next http.Handler) http.HandlerFunc{
 			w.Write([]byte(`{"error": "Missing authentication token"}`))
 			return
 		}
-		// If the token is valid, the user’s ID is stored in the Gin context for further use.
-		// Add claims to the request context
-		//userIDVal := claims.ID
-		//fmt.Println(claims.ID)
-		//if !exists{
-		//	http.Error(w, "Unauthorized - user_id not in the token", http.StatusUnauthorized)
-		//	return
-		//}
-
-		//userID, ok := userIDVal.(string)
-		//if !ok {
-		//	http.Error(w, "Unauthorized - user_id not a string", http.StatusUnauthorized)
-		//	return
-		//}
 		ctx := context.WithValue(r.Context(), "id", claims.ID)
-		//next.ServeHTTP(w, r.WithContext(ctx))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
