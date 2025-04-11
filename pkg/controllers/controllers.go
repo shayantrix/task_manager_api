@@ -72,12 +72,14 @@ func Register(w http.ResponseWriter, r *http.Request){
 		}
 	}
 	fmt.Println(reg.ID)
+	/*
 	token, err := tokens.JWTGenerate(reg.ID)
         if err != nil {
                 log.Fatal("Error in jwt token generation: %s", err)
         }
         json.NewEncoder(w).Encode(token)
 	//registerData = append(registerData, reg)
+	*/
 }
 
 func GetUsers(w http.ResponseWriter, r *http.Request){
@@ -111,16 +113,22 @@ func Login(w http.ResponseWriter, r *http.Request){
 	if err := json.Unmarshal(body, &reg); err != nil{
 		log.Fatal("Error in Decoding json: ", err)
 	}
-
+	/*
+	val := r.Context().Value("id")
+	userID, ok := val.(string)
+	if !ok || userID ==""{
+		http.Error(w, "Unauthorized - invalid token", http.StatusUnauthorized)
+		return
+	}
+	*/
 	for i, item := range registerData{		
 		// Use jwt token to login
-		userID := r.Context().Value("userID").(string)
-		if item.ID.String() == userID{
+		/*if item.ID.String() == userID{
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(fmt.Sprintf(`{"userID": "%s"}`, userID)))
 			json.NewEncoder(w).Encode(registerData[i])
 			
-		}
+		}*/
 
 		if item.Email != reg.Email{
 			log.Fatal("Email does not exists")
@@ -129,6 +137,11 @@ func Login(w http.ResponseWriter, r *http.Request){
 		if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
 			log.Fatal("Password does not match! ", err)
 		}else{
+			token, err := tokens.JWTGenerate(reg.ID)
+       	 		if err != nil {
+                		log.Fatal("Error in jwt token generation: %s", err)
+       			}
+        		json.NewEncoder(w).Encode(token)
 			json.NewEncoder(w).Encode(registerData[i])
 		}
 	}
@@ -140,5 +153,10 @@ func Login(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(token)
 	*/
 	//fmt.Printf("token: %s", token)
-	fmt.Printf("User %s Login secssussfully", reg.Name)
+	fmt.Printf("User %v Login secssussfully", reg.Name)
+}
+
+func Test(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(registerData)
 }
