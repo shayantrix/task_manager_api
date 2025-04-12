@@ -12,8 +12,6 @@ var RoutingGroup = func(router *mux.Router){
 	router.HandleFunc("/register", controllers.Register).Methods("POST")
 	router.HandleFunc("/users", controllers.GetUsers).Methods("GET")
 	router.HandleFunc("/login", controllers.Login).Methods("POST")
-	//protected := middleware.Authentication()
-	//router.HandleFunc("/protected", protected).Methods("POST")
 	router.Handle("/protected", middleware.Authentication(http.HandlerFunc(controllers.Test))).Methods("GET")
-	//router.Handle("/protected", middleware.Authentication(controllers.Test))
+	router.Handle("/protected/taskmanagement/{id}", middleware.Authorization(http.HandlerFunc(controllers.Add))).Methods("POST")
 }

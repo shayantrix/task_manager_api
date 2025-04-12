@@ -20,10 +20,10 @@ type CustomClaims struct{
 // type Myfloat float64
 //type MyExpireTime time.Now().Add(time.Hour*24).Unix()
 
-func JWTGenerate(ID uuid.UUID) (string, error){
+func JWTGenerate(IDl uuid.UUID) (string, error){
 	// For custom claims 
 	claims := CustomClaims {
-		ID, 
+		IDl, 
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
@@ -39,10 +39,6 @@ func JWTGenerate(ID uuid.UUID) (string, error){
 
 func ValidateJWT(tokenString string) (*CustomClaims, error) {
         //Parse The token
-        // jwt.ParseWithClaims(token_String, &MycustomClaims, 
-        //var myCustomClaims CustomClaims
-	// Instead of &myCustomClaims we can use (jwt.MapClaims) if we didnt have custom tokens. The default is jwt.MapClaims
-        //var myCustomClaims CustomClaims
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error){
                 //Check the login Method (jwt.SigningMethodHS256)
                 if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -50,19 +46,18 @@ func ValidateJWT(tokenString string) (*CustomClaims, error) {
                 }
 
                 return jwtKey, nil
-        }, jwt.WithLeeway(5*time.Second))
+        })
 
         if err != nil || !token.Valid{
                 return nil, fmt.Errorf("Error in Parsing the token: %s", err)
         }
 
 	if claims, ok := token.Claims.(*CustomClaims); ok {
-		fmt.Println(claims)
+		fmt.Println(claims.ID)
 		return claims, nil
 	}else{
 		return nil, fmt.Errorf("Error in recieving claims: %v", err)
 	}
-
 }
 
 

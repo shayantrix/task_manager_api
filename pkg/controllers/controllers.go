@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"fmt"
+	//"context"
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
 	"github.com/shayantrix/task_manager_api/pkg/auth"
@@ -22,6 +23,13 @@ type RegisterData struct{
         Pass string `json:"password"`
 }
 
+type Tasks struct{
+	ID uuid.UUID	`json:"id"`
+	TaskString map[string]string `json:"task"`
+}
+//store tasks data
+var TasksData []Tasks
+
 type SecureAuth struct{
         Email   string  `json:"email"`
         Pass  []byte    `json:"-"`
@@ -35,7 +43,7 @@ type DataWithoutPass struct{
         Email string `json:"email"`
 }
 
-var registerData []RegisterData
+var Data []RegisterData
 
 var HashedPasswords []byte
 
@@ -57,16 +65,16 @@ func Register(w http.ResponseWriter, r *http.Request){
 	
 	reg.ID = uuid.New()
 
-	if registerData == nil {
-		registerData = append(registerData, reg)
+	if Data == nil {
+		Data = append(Data, reg)
 	}else{
 
-		for _, v := range registerData{
+		for _, v := range Data{
 			if v.Email == reg.Email{
 				fmt.Printf("This email already exists")
 			
 			}else{
-				registerData = append(registerData, reg)
+				Data = append(Data, reg)
 	
 			}
 		}
@@ -78,14 +86,14 @@ func Register(w http.ResponseWriter, r *http.Request){
                 log.Fatal("Error in jwt token generation: %s", err)
         }
         json.NewEncoder(w).Encode(token)
-	//registerData = append(registerData, reg)
+	//Data = append(Data, reg)
 	*/
 }
 
 func GetUsers(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	var userResponse []DataWithoutPass
-	for _, v := range registerData{
+	for _, v := range Data{
 		userResponse = append(userResponse, DataWithoutPass{
 			Name: v.Name,
 			Email: v.Email,
@@ -113,23 +121,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 	if err := json.Unmarshal(body, &reg); err != nil{
 		log.Fatal("Error in Decoding json: ", err)
 	}
-	/*
-	val := r.Context().Value("id")
-	userID, ok := val.(string)
-	if !ok || userID ==""{
-		http.Error(w, "Unauthorized - invalid token", http.StatusUnauthorized)
-		return
-	}
-	*/
-	for i, item := range registerData{		
-		// Use jwt token to login
-		/*if item.ID.String() == userID{
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(fmt.Sprintf(`{"userID": "%s"}`, userID)))
-			json.NewEncoder(w).Encode(registerData[i])
-			
-		}*/
-
+	for i, item := range Data{		
 		if item.Email != reg.Email{
 			log.Fatal("Email does not exists")
 		}
@@ -137,26 +129,45 @@ func Login(w http.ResponseWriter, r *http.Request){
 		if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
 			log.Fatal("Password does not match! ", err)
 		}else{
-			token, err := tokens.JWTGenerate(reg.ID)
+			token, err := tokens.JWTGenerate(item.ID)
        	 		if err != nil {
                 		log.Fatal("Error in jwt token generation: %s", err)
        			}
         		json.NewEncoder(w).Encode(token)
-			json.NewEncoder(w).Encode(registerData[i])
+			json.NewEncoder(w).Encode(Data[i])
 		}
 	}
-	/*
-	token, err := tokens.JWTGenerate(reg.ID)
-	if err != nil {
-		log.Fatal("Error in jwt token generation: %s", err)
-	}
-	json.NewEncoder(w).Encode(token)
-	*/
 	//fmt.Printf("token: %s", token)
 	fmt.Printf("User %v Login secssussfully", reg.Name)
 }
 
 func Test(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(registerData)
+	userID := r.Context().Value("id")
+
+	response := map[string]interface{}{
+		"message": "You have accessed a protected route",
+		"user_id": userID,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func Add(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	userIDInterface := r.Context().Value("id")
+
+	var tk Tasks
+
+	body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &tk.TaskString); err != nil{
+		log.Fatal("Error in recieving user's data: %s", err)
+	}
+	userID, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		log.Fatal("Error in ID type")
+	}
+	tk.ID = userID
+
+	TasksData = append(TasksData, tk)
+	json.NewEncoder(w).Encode(tk)
 }
