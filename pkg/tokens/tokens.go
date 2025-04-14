@@ -23,8 +23,8 @@ type CustomClaims struct{
 func JWTGenerate(IDl uuid.UUID) (string, error){
 	// For custom claims 
 	claims := CustomClaims {
-		IDl, 
-		jwt.RegisteredClaims{
+		ID: IDl, 
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 		},
 	}
@@ -53,7 +53,6 @@ func ValidateJWT(tokenString string) (*CustomClaims, error) {
         }
 
 	if claims, ok := token.Claims.(*CustomClaims); ok {
-		fmt.Println(claims.ID)
 		return claims, nil
 	}else{
 		return nil, fmt.Errorf("Error in recieving claims: %v", err)

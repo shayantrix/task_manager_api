@@ -4,7 +4,7 @@ import(
 	"context"
 	"net/http"
 	"github.com/gorilla/mux"
-	"fmt"
+	//"fmt"
 	"strings"
 	"strconv"
 	"github.com/shayantrix/task_manager_api/pkg/tokens"
@@ -78,13 +78,10 @@ func Authorization(next http.Handler) http.HandlerFunc{
 		params := mux.Vars(r)
 		paramID64, err := strconv.ParseInt(params["id"], 10, 0)
 		paramID := int(paramID64)
-		fmt.Println(paramID)
 		//Check if the userID from parameter is equal to JWT token id
 		// Error in this part		
 		//|| item.ID != claims.ID
 		for i, item := range controllers.Data{
-			fmt.Println(item.ID)
-			fmt.Println(claims.ID)
 			if i != paramID || item.ID != claims.ID{
 				w.WriteHeader(http.StatusForbidden)
 				w.Header().Set("Content-Type", "application/json")
