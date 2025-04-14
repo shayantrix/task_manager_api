@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"fmt"
-	//"slices"
 	//"context"
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
@@ -121,24 +120,29 @@ func Login(w http.ResponseWriter, r *http.Request){
 	if err := json.Unmarshal(body, &reg); err != nil{
 		log.Fatal("Error in Decoding json: ", err)
 	}
-	for i, item := range Data{		
-		if item.Email != reg.Email{
-			log.Fatal("Email does not exists")
-		}
 
-		if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
-			log.Fatal("Password does not match! ", err)
-		}else{
-			token, err := tokens.JWTGenerate(item.ID)
-       	 		if err != nil {
-                		log.Fatal("Error in jwt token generation: %s", err)
-       			}
-        		json.NewEncoder(w).Encode(token)
-			json.NewEncoder(w).Encode(Data[i])
+	found := false
+
+	for i, item := range Data{		
+		if item.Email == reg.Email{
+			found = true
+			if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
+				log.Fatal("Password does not match! ", err)
+			}else{
+				token, err := tokens.JWTGenerate(item.ID)
+       	 			if err != nil {
+                			log.Fatal("Error in jwt token generation: %s", err)
+       				}
+        			json.NewEncoder(w).Encode(token)
+				json.NewEncoder(w).Encode(Data[i])
+			}
 		}
-	}
 	//fmt.Printf("token: %s", token)
 	fmt.Printf("User %v Login secssussfully", reg.Name)
+	}
+	if !found{
+		log.Fatal("Email does not exists")
+	}
 }
 
 func Test(w http.ResponseWriter, r *http.Request){
@@ -146,7 +150,7 @@ func Test(w http.ResponseWriter, r *http.Request){
 	userID := r.Context().Value("id")
 
 	response := map[string]interface{}{
-		"message": "You have accessed a protected route",
+		"message": "Xou have accessed a protected route",
 		"user_id": userID,
 	}
 	json.NewEncoder(w).Encode(response)
@@ -157,10 +161,10 @@ func Add(w http.ResponseWriter, r *http.Request){
 	userIDInterface := r.Context().Value("id")
 	
 	var X struct{
-                //deleteItem string `json:"delete"`
-                addItem  []string  `json:"add"`
+                //DeleteItem string `json:"delete"`
+                AddItem  []string  `json:"add"`
         }
-
+	
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
 		log.Fatal("Error in recieving user's data: %s", err)
@@ -170,22 +174,21 @@ func Add(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		log.Fatal("Error in ID type")
 	}
-	fmt.Println(X.addItem)
+	fmt.Println(X.AddItem)
 	for i, item := range TasksData{
 		if item.ID == userID {
-			TasksData[i].TaskString = append(TasksData[i].TaskString, X.addItem...)
+			TasksData[i].TaskString = append(TasksData[i].TaskString, X.AddItem...)
 		}else{
 			TasksData = append(TasksData, Tasks{
 				ID: userID,
-				TaskString: X.addItem,
+				TaskString: X.AddItem,
 			})
 		}
 	}
-	json.NewEncoder(w).Encode(X.addItem)
+	json.NewEncoder(w).Encode(X.AddItem)
 }
-/*
+
 func Delete(w http.ResponseWriter, r *http.Request){
-	// delete(m, key)
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
 	userID, ok := userIDInterface.(uuid.UUID)
@@ -194,61 +197,32 @@ func Delete(w http.ResponseWriter, r *http.Request){
         }
 
 	var X struct{
-		ID uuid.UUID	`json:"id"`
-		deleteItem string `json:"delete"`
-		//addItem	string	`json:"add"`
+		DeleteItem string `json:"delete"`
+		//AddItem	string	`json:"add"`
 	}
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
 		log.Fatal("Error in receiving user's data: %s", err)
 	}
-
+	
+	found := false
+	fmt.Println(X.DeleteItem)
 	for i, item := range TasksData{
 		if userID == item.ID{
-			if X.deleteItem == TasksData[i].TaskString{
-				TasksData[i].TaskString = slices.Delete(TasksData[i].TaskString, IndexOf(TasksData[i].TaskString, X.deleteItem))
-				fmt.Println("%s is deleted from your task list", x)
-				json.NewEncoder(w).Encode(TasksData[i])
+			for j, task := range item.TaskString{
+				if task == X.DeleteItem {
+					TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
+					fmt.Fprintf(w, "%s is deleted from your task list", X.DeleteItem)
+					found = true
+					json.NewEncoder(w).Encode(TasksData[i])
+					return
+				}
 			}
-		}else{
-			w.Write([]byte(`{"error":"Not found the task"}`))
-			return
 		}
 	}
-}
-*/
-/*
-func Update(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type", "application/json")
-
-	userIDInterface := r.Context().Value("id")
-	userID, ok := userIDInterface.(uuid.UUID)
-	if !ok {
-		log.Fatal("Error in ID type")
-	}
-	
-	type X struct{
-                ID uuid.UUID    `json:"id"`
-                deleteItem string `json:"delete"`
-                addItem       string  `json:"add"`
-        }
-	
-	body, _ := io.ReadAll(r.Body)
-	if err := json.Unmarshal(body, &X); err != nil {
-		log.Fatal("Error in receiving json data: %s", err)
-	}
-
-	for i, item := range TasksData{
-		if userID == item.ID{
-			delete(TasksData[i].TaskString, tk.TaskString)
-			TasksData = append(TasksData, tk)
-			json.NewEncoder(w).Encode(TasksData[i])
-		}else{
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error":"Not found the task"}`))
-			return
-		}
+	if !found{
+		http.Error(w, "Task not found in your task list", http.StatusNotFound)
 	}
 }
-*/
+

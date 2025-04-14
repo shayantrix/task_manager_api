@@ -3,13 +3,13 @@ package middleware
 import(
 	"context"
 	"net/http"
-	"github.com/gorilla/mux"
+	//"github.com/gorilla/mux"
 	//"fmt"
 	"strings"
-	"strconv"
+	//"strconv"
 	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	//"github.com/golang-jwt/jwt/v5"
-	"github.com/shayantrix/task_manager_api/pkg/controllers"
+	//"github.com/shayantrix/task_manager_api/pkg/controllers"
 )
 
 // Define an authentication middleware that protects routes that need authentication
@@ -74,7 +74,7 @@ func Authorization(next http.Handler) http.HandlerFunc{
 			w.Write([]byte(`{"error": "Missing authentication token"}`))
 			return 
 		}
-		
+		/*	
 		params := mux.Vars(r)
 		paramID64, err := strconv.ParseInt(params["id"], 10, 0)
 		paramID := int(paramID64)
@@ -89,7 +89,7 @@ func Authorization(next http.Handler) http.HandlerFunc{
 				return 
 			}
 		}
-
+		*/
 		ctx := context.WithValue(r.Context(), "id", claims.ID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
