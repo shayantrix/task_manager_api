@@ -231,3 +231,42 @@ func Delete(w http.ResponseWriter, r *http.Request){
 	http.Error(w, "No task found for this user", http.StatusBadRequest)
 }
 
+func Update(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	userIDInterface := r.Context().Value("id")
+	userID, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		log.Fatal("Error in ID type")
+	}
+
+	var X struct{
+		OldItem string `json:"old"`
+		NewItem string `json:"new"`
+	}
+
+	body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &X); err != nil{
+		log.Fatal("Error in receiving user's JSON data: %s", err)
+	}
+
+	//we iterate and delete the OldItem and add NewItem in Tasks
+
+	for i, item := range TasksData{
+		if userID == item.ID{
+			for j, task := range item.TaskString{
+				if task == X.OldItem {
+					//TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
+					item.TaskString[j] = X.NewItem
+					fmt.Fprintf(w, "'%s' is Changed to '%s'", X.OldItem, X.NewItem)
+					json.NewEncoder(w).Encode(TasksData[i].TaskString)
+					return
+				}else{
+					http.Error(w, "Task does not exist", http.StatusNotFound)
+				}
+			}
+		}else{
+			http.Error(w, "There is no task for this user", http.StatusNotFound)
+		}
+	}
+
+}
