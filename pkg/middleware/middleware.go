@@ -9,7 +9,7 @@ import(
 	//"strconv"
 	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	//"github.com/golang-jwt/jwt/v5"
-	//"github.com/shayantrix/task_manager_api/pkg/controllers"
+	"github.com/shayantrix/task_manager_api/pkg/controllers"
 )
 
 // Define an authentication middleware that protects routes that need authentication
@@ -90,6 +90,16 @@ func Authorization(next http.Handler) http.HandlerFunc{
 			}
 		}
 		*/
+
+		for i, _ := range controllers.Data{
+			if controllers.Data[i].ID != claims.ID{
+				w.WriteHeader(http.StatusForbidden)
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(`{"error: "Mismatching user id"}`))
+				return
+			}
+		}
+
 		ctx := context.WithValue(r.Context(), "id", claims.ID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

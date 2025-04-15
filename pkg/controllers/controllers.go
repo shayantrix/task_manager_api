@@ -141,7 +141,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 	fmt.Printf("User %v Login secssussfully", reg.Name)
 	}
 	if !found{
-		log.Fatal("Email does not exists")
+		http.Error(w, "Email does not exists", http.StatusNotFound)
 	}
 }
 
@@ -174,18 +174,26 @@ func Add(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		log.Fatal("Error in ID type")
 	}
-	fmt.Println(X.AddItem)
+
+	found := false
 	for i, item := range TasksData{
 		if item.ID == userID {
 			TasksData[i].TaskString = append(TasksData[i].TaskString, X.AddItem...)
-		}else{
-			TasksData = append(TasksData, Tasks{
-				ID: userID,
-				TaskString: X.AddItem,
-			})
+			found = true
+			json.NewEncoder(w).Encode(TasksData[i])
+			break
 		}
 	}
-	json.NewEncoder(w).Encode(X.AddItem)
+	
+	if !found{
+		NewTask := Tasks{
+			ID: userID,
+			TaskString: X.AddItem,
+		}
+		TasksData = append(TasksData, NewTask)
+		json.NewEncoder(w).Encode(NewTask)
+	}
+			
 }
 
 func Delete(w http.ResponseWriter, r *http.Request){
@@ -206,23 +214,20 @@ func Delete(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in receiving user's data: %s", err)
 	}
 	
-	found := false
-	fmt.Println(X.DeleteItem)
 	for i, item := range TasksData{
 		if userID == item.ID{
 			for j, task := range item.TaskString{
 				if task == X.DeleteItem {
 					TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
 					fmt.Fprintf(w, "%s is deleted from your task list", X.DeleteItem)
-					found = true
 					json.NewEncoder(w).Encode(TasksData[i])
 					return
 				}
 			}
+			http.Error(w, "Task not found in your task list", http.StatusNotFound)
+			return
 		}
 	}
-	if !found{
-		http.Error(w, "Task not found in your task list", http.StatusNotFound)
-	}
+	http.Error(w, "No task found for this user", http.StatusBadRequest)
 }
 
