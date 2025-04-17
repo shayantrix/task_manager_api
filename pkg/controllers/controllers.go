@@ -25,7 +25,8 @@ type RegisterData struct{
 
 type Tasks struct{
 	ID uuid.UUID	`json:"id"`
-	TaskString []string `json:"task"`
+	//TaskString []string `json:"task"`
+	TasksDatabase []TasksMark	`json:"tasks"`
 }
 //store tasks data
 var TasksData []Tasks
@@ -42,6 +43,15 @@ type DataWithoutPass struct{
         Name string `json:"name"`
         Email string `json:"email"`
 }
+
+type TasksMark struct{
+	TaskString string `json:"task"`
+	Description string `json:"description"`
+	TaskStatus bool	`json:"completed"`
+}
+
+//var CompletedTasks []TasksMark
+
 
 var Data []RegisterData
 
@@ -68,26 +78,19 @@ func Register(w http.ResponseWriter, r *http.Request){
 	if Data == nil {
 		Data = append(Data, reg)
 	}else{
+		found := false
 
 		for _, v := range Data{
 			if v.Email == reg.Email{
-				fmt.Printf("This email already exists")
-			
-			}else{
-				Data = append(Data, reg)
-	
+				http.Error(w, "This email already exists", http.StatusBadRequest)
+				found = true
 			}
 		}
+		if !found{
+                	Data = append(Data, reg)
+                }
 	}
 	fmt.Println(reg.ID)
-	/*
-	token, err := tokens.JWTGenerate(reg.ID)
-        if err != nil {
-                log.Fatal("Error in jwt token generation: %s", err)
-        }
-        json.NewEncoder(w).Encode(token)
-	//Data = append(Data, reg)
-	*/
 }
 
 func GetUsers(w http.ResponseWriter, r *http.Request){
@@ -127,7 +130,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 		if item.Email == reg.Email{
 			found = true
 			if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
-				log.Fatal("Password does not match! ", err)
+				http.Error(w, "Password does not match!", http.StatusNotFound)
+				fmt.Println(err)
 			}else{
 				token, err := tokens.JWTGenerate(item.ID)
        	 			if err != nil {
@@ -160,11 +164,12 @@ func Add(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
 	
-	var X struct{
+	/*var X struct{
                 //DeleteItem string `json:"delete"`
                 AddItem  []string  `json:"add"`
-        }
-	
+        }*/
+	var X TasksMark
+
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
 		log.Fatal("Error in recieving user's data: %s", err)
@@ -178,24 +183,36 @@ func Add(w http.ResponseWriter, r *http.Request){
 	found := false
 	for i, item := range TasksData{
 		if item.ID == userID {
+
+			/*
 			TasksData[i].TaskString = append(TasksData[i].TaskString, X.AddItem...)
+			TasksData[i].Description = "newly created"
+			TasksData[i].
+			*/
+			TasksData[i].TasksDatabase = append(TasksData[i].TasksDatabase, X)
+			/*CompletedTasks = append(CompletedTasks, TasksMark{
+				Description: "Newly created",
+				TaskStatus: false, //not completed
+			})*/
 			found = true
-			json.NewEncoder(w).Encode(TasksData[i])
+			json.NewEncoder(w).Encode(TasksData[i].TasksDatabase)
 			break
+			
 		}
 	}
+
+
 	
 	if !found{
 		NewTask := Tasks{
 			ID: userID,
-			TaskString: X.AddItem,
+			TasksDatabase: []TasksMark{X},
 		}
 		TasksData = append(TasksData, NewTask)
 		json.NewEncoder(w).Encode(NewTask)
 	}
 			
 }
-
 func Delete(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
@@ -216,9 +233,9 @@ func Delete(w http.ResponseWriter, r *http.Request){
 	
 	for i, item := range TasksData{
 		if userID == item.ID{
-			for j, task := range item.TaskString{
-				if task == X.DeleteItem {
-					TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
+			for j, task := range item.TasksDatabase{
+				if task.TaskString == X.DeleteItem {
+					TasksData[i].TasksDatabase = append(item.TasksDatabase[:j], item.TasksDatabase[j+1:]...)
 					fmt.Fprintf(w, "%s is deleted from your task list", X.DeleteItem)
 					json.NewEncoder(w).Encode(TasksData[i])
 					return
@@ -228,6 +245,11 @@ func Delete(w http.ResponseWriter, r *http.Request){
 			return
 		}
 	}
+
+	//for i, item := range CompletedTasks{
+	//	if userID == item.ID{
+
+
 	http.Error(w, "No task found for this user", http.StatusBadRequest)
 }
 
@@ -246,19 +268,21 @@ func Update(w http.ResponseWriter, r *http.Request){
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
-		log.Fatal("Error in receiving user's JSON data: %s", err)
+		log.Fatal("Error in receiving user's JSON data: ", err)
 	}
 
 	//we iterate and delete the OldItem and add NewItem in Tasks
 
 	for i, item := range TasksData{
 		if userID == item.ID{
-			for j, task := range item.TaskString{
-				if task == X.OldItem {
+			for j, task := range item.TasksDatabase{
+				if task.TaskString == X.OldItem {
 					//TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
-					item.TaskString[j] = X.NewItem
+					TasksData[i].TasksDatabase[j].TaskString = X.NewItem
+					TasksData[i].TasksDatabase[j].Description = "Changed the task"
+					TasksData[i].TasksDatabase[j].TaskStatus = false 
 					fmt.Fprintf(w, "'%s' is Changed to '%s'", X.OldItem, X.NewItem)
-					json.NewEncoder(w).Encode(TasksData[i].TaskString)
+					json.NewEncoder(w).Encode(TasksData[i])
 					return
 				}else{
 					http.Error(w, "Task does not exist", http.StatusNotFound)
@@ -266,6 +290,41 @@ func Update(w http.ResponseWriter, r *http.Request){
 			}
 		}else{
 			http.Error(w, "There is no task for this user", http.StatusNotFound)
+		}
+	}
+}
+
+func Mark(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	
+	userIDInterface := r.Context().Value("id")
+	userID, ok := userIDInterface.(uuid.UUID)
+	if !ok {
+		log.Fatal("Error in userID type")
+	}
+
+	var X TasksMark
+
+	body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &X); err != nil{
+		log.Fatal("Error in JSON input file: ", err)
+	}
+	//X.Description X.Status
+
+	for i, item := range TasksData{
+		if userID == item.ID{
+			for j, task := range item.TasksDatabase{
+				if X.TaskStatus == true && X.TaskString == task.TaskString{
+					TasksData[i].TasksDatabase[j].TaskString = X.TaskString
+					TasksData[i].TasksDatabase[j].Description = X.Description
+					TasksData[i].TasksDatabase[j].TaskStatus = true
+				}
+
+			}
+			json.NewEncoder(w).Encode(TasksData[i])
+		}else{
+			http.Error(w, "There is no task for this user", http.StatusBadRequest)
+			return
 		}
 	}
 

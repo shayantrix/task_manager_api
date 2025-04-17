@@ -17,5 +17,6 @@ var RoutingGroup = func(router *mux.Router){
 	router.Handle("/protected/taskmanagement/delete", middleware.Authorization(http.HandlerFunc(controllers.Delete))).Methods("POST")
 	//router.Handle("/protected/taskmanagement/tasks/{id}", middleware.Authorization(http.HandlerFunc(controllers.GetAllTasks))).Methods("GET")
 	router.Handle("/protected/taskmanagement/update", middleware.Authorization(http.HandlerFunc(controllers.Update))).Methods("PUT")
+	router.Handle("/protected/taskmanagement/mark", middleware.Authorization(http.HandlerFunc(controllers.Mark))).Methods("POST")
 }
 

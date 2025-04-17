@@ -91,13 +91,20 @@ func Authorization(next http.Handler) http.HandlerFunc{
 		}
 		*/
 
-		for i, _ := range controllers.Data{
-			if controllers.Data[i].ID != claims.ID{
-				w.WriteHeader(http.StatusForbidden)
-				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte(`{"error: "Mismatching user id"}`))
-				return
+		found := false
+
+		for _, item := range controllers.Data{
+			if item.ID == claims.ID{
+				found = true
+				break
 			}
+		}
+
+		if !found{
+			w.WriteHeader(http.StatusForbidden)
+                       	w.Header().Set("Content-Type", "application/json")
+                        w.Write([]byte(`{"error": "Mismatching user id"}`))
+                        return
 		}
 
 		ctx := context.WithValue(r.Context(), "id", claims.ID)
