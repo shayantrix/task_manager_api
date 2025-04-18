@@ -142,7 +142,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 			}
 		}
 	//fmt.Printf("token: %s", token)
-	fmt.Printf("User %v Login secssussfully\n", reg.Name)
+	fmt.Printf("User %v Login secssussfully", reg.Name)
 	}
 	if !found{
 		http.Error(w, "Email does not exists", http.StatusNotFound)
@@ -164,6 +164,10 @@ func Add(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
 	
+	/*var X struct{
+                //DeleteItem string `json:"delete"`
+                AddItem  []string  `json:"add"`
+        }*/
 	var X TasksMark
 
 	body, _ := io.ReadAll(r.Body)
@@ -180,7 +184,16 @@ func Add(w http.ResponseWriter, r *http.Request){
 	for i, item := range TasksData{
 		if item.ID == userID {
 
+			/*
+			TasksData[i].TaskString = append(TasksData[i].TaskString, X.AddItem...)
+			TasksData[i].Description = "newly created"
+			TasksData[i].
+			*/
 			TasksData[i].TasksDatabase = append(TasksData[i].TasksDatabase, X)
+			/*CompletedTasks = append(CompletedTasks, TasksMark{
+				Description: "Newly created",
+				TaskStatus: false, //not completed
+			})*/
 			found = true
 			json.NewEncoder(w).Encode(TasksData[i].TasksDatabase)
 			break
@@ -329,8 +342,15 @@ func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	if !ok{
 		log.Fatal("Error in userID type")
 	}
+
 	params := mux.Vars(r)
-	switch X := params["status"]; X{
+	if params["status"] == "completed"{
+                fmt.Println("Yeah it works")
+        }else{
+                fmt.Println("Fuck it")
+        }
+	/*
+	switch params := mux.Vars(r); params["status"]{
 	case "completed":
 		for _, item := range TasksData{
 			if userID == item.ID{
@@ -363,5 +383,5 @@ func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Get the fuck out", http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest)
 	}
-
+*/
 }
