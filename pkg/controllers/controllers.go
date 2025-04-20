@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"github.com/shayantrix/task_manager_api/pkg/tokens"
+	//"github.com/shayantrix/task_manager_api/pkg/tokens"
+	"github.com/shayantrix/task_manager_api/pkg/models"
 	"github.com/google/uuid"
 	"log"
 	"encoding/json"
@@ -10,12 +11,12 @@ import (
 	//"context"
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/shayantrix/task_manager_api/pkg/auth"
+	//"github.com/shayantrix/task_manager_api/pkg/auth"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
-	"github.com/gorilla/mux"
+	//"github.com/gorilla/mux"
 )
-
+/*
 type RegisterData struct{
         ID uuid.UUID    `json:"id"`
         Name string `json:"name"`
@@ -43,56 +44,63 @@ type DataWithoutPass struct{
         Name string `json:"name"`
         Email string `json:"email"`
 }
-
-type TasksMark struct{
+*/
+/*type TasksMark struct{
 	TaskString string `json:"task"`
 	Description string `json:"description"`
 	TaskStatus bool	`json:"completed"`
 }
-
+*/
 //var CompletedTasks []TasksMark
 
 
-var Data []RegisterData
+//var Data []RegisterData
 
-var HashedPasswords []byte
+//var HashedPasswords []byte
 
 //Register handler -> Register(w, r)
 func Register(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
-	var reg RegisterData
+	var reg models.RegisterData
 	
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &reg); err != nil{
 		log.Fatal("Error in decoding json file", err)
 	}
 	
+	var h models.HashedPasswords
 	var hash_err error
-	HashedPasswords, hash_err  =  bcrypt.GenerateFromPassword([]byte(reg.Pass), bcrypt.DefaultCost)
+	h.Hashed, hash_err  =  bcrypt.GenerateFromPassword([]byte(reg.Pass), bcrypt.DefaultCost)
 	if hash_err != nil{
 		log.Fatal("Hashing error: ", hash_err)
 	}
+
+	h.StoreHashPasswords()
 	
 	reg.ID = uuid.New()
 
+	Data := reg.RetrieveUser(reg.ID)
+
+	AllUsers := models.GetAllUsers()
+
 	if Data == nil {
-		Data = append(Data, reg)
+		reg.AddUser()
 	}else{
 		found := false
 
-		for _, v := range Data{
+		for _, v := range AllUsers{
 			if v.Email == reg.Email{
 				http.Error(w, "This email already exists", http.StatusBadRequest)
 				found = true
 			}
 		}
 		if !found{
-                	Data = append(Data, reg)
+                	reg.AddUser()
                 }
 	}
 	fmt.Println(reg.ID)
 }
-
+/*
 func GetUsers(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	var userResponse []DataWithoutPass
@@ -110,7 +118,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request){
 	return func(w http.ResponseWriter, r *http.Request){
 	}
 }*/
-
+/*
 func Login(w http.ResponseWriter, r *http.Request){
 	// User should put email and password
 	// We will check whether password matches the hashed one that we have in authentication
@@ -360,8 +368,8 @@ func TaskRetrieval(w http.ResponseWriter, r *http.Request){
                 }
 		w.WriteHeader(http.StatusOK)
 	default:
-		http.Error(w, "Get the fuck out", http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-}
+}*/

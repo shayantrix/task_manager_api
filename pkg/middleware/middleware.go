@@ -2,6 +2,7 @@ package middleware
 
 import(
 	"context"
+	"github.com/shayantrix/task_manager_api/pkg/models"
 	"net/http"
 	//"github.com/gorilla/mux"
 	//"fmt"
@@ -9,7 +10,7 @@ import(
 	//"strconv"
 	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	//"github.com/golang-jwt/jwt/v5"
-	"github.com/shayantrix/task_manager_api/pkg/controllers"
+	//"github.com/shayantrix/task_manager_api/pkg/controllers"
 )
 
 // Define an authentication middleware that protects routes that need authentication
@@ -93,12 +94,20 @@ func Authorization(next http.Handler) http.HandlerFunc{
 
 		found := false
 
-		for _, item := range controllers.Data{
+		AllUsers := models.GetAllUsers()
+		for _, item := range AllUsers{
 			if item.ID == claims.ID{
 				found = true
 				break
 			}
 		}
+
+		//for _, item := range controllers.Data{
+		//	if item.ID == claims.ID{
+		//		found = true
+		//		break
+		//	}
+		//}
 
 		if !found{
 			w.WriteHeader(http.StatusForbidden)

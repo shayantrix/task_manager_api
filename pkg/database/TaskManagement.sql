@@ -1,0 +1,20 @@
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users(
+	ID	uuid	gen_random_uuid(),
+	Name	VARCHAR(128)	NOT NULL,
+	Email	VARCHAR(128) 	NOT NULL,
+	Pass	VARCHAR(128)	NOT NULL,
+	PRIMARY KEY NOT NULL (ID)
+);	
+
+DROP TABLE IF EXISTS tasks;
+
+CREATE TABLE tasks(
+	TaskID	int PRIMARY KEY,
+	UserID	uuid,
+	TaskString	VARCHAR(128)	NOT NULL,
+	Description	VARCHAR(400) NOT NULL,
+	TaskStat	BOOLEAN,
+	FOREIGN KEY (UserID) REFRENCES users(ID)
+);
