@@ -59,6 +59,11 @@ func (r *RegisterData) AddUser() *RegisterData{
 	return r
 }
 
+func (t *Tasks) AddTasks() *Tasks{
+	DB.Select(t.TaskString, t.Description, t.TaskStatus).Create(&t)
+	return t
+}
+
 func (h *HashedPasswords) StoreHashPasswords() *HashedPasswords{
 	DB.Create(&h)
 	return h
@@ -87,4 +92,9 @@ func GetUsersNames() []RegisterData{
 	return result
 }
 
+func GetAllTasks() []Tasks{
+	var result []Tasks
+	DB.Find(&result)
+	return result
+}
 

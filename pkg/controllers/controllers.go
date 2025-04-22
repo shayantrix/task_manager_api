@@ -114,48 +114,12 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-/*
-
-	for i, item := range Data{		
-		if item.Email == reg.Email{
-			found = true
-			if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
-				http.Error(w, "Password does not match!", http.StatusNotFound)
-				fmt.Println(err)
-			}else{
-				token, err := tokens.JWTGenerate(item.ID)
-       	 			if err != nil {
-                			log.Fatal("Error in jwt token generation: %s", err)
-       				}
-        			json.NewEncoder(w).Encode(token)
-				json.NewEncoder(w).Encode(Data[i])
-			}
-		}
-	//fmt.Printf("token: %s", token)
-	fmt.Printf("User %v Login secssussfully\n", reg.Name)
-	}
-	if !found{
-		http.Error(w, "Email does not exists", http.StatusNotFound)
-	}
-*/
-
-/*
-func Test(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type", "application/json")
-	userID := r.Context().Value("id")
-
-	response := map[string]interface{}{
-		"message": "Xou have accessed a protected route",
-		"user_id": userID,
-	}
-	json.NewEncoder(w).Encode(response)
-}
 
 func Add(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
 	
-	var X TasksMark
+	var X models.Tasks
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
@@ -166,14 +130,16 @@ func Add(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		log.Fatal("Error in ID type")
 	}
-
+	
 	found := false
-	for i, item := range TasksData{
-		if item.ID == userID {
+	AllTasks := models.GetAllTasks()
 
-			TasksData[i].TasksDatabase = append(TasksData[i].TasksDatabase, X)
+	for _, item := range AllTasks{
+		if item.ParentRefer == userID {
+			X.AddTasks()
+			//AllTasks[i]. = append(TasksData[i].TasksDatabase, X)
 			found = true
-			json.NewEncoder(w).Encode(TasksData[i].TasksDatabase)
+			json.NewEncoder(w).Encode(item)
 			break
 			
 		}
@@ -182,15 +148,17 @@ func Add(w http.ResponseWriter, r *http.Request){
 
 	
 	if !found{
-		NewTask := Tasks{
-			ID: userID,
-			TasksDatabase: []TasksMark{X},
-		}
-		TasksData = append(TasksData, NewTask)
-		json.NewEncoder(w).Encode(NewTask)
+		//NewTask := Tasks{
+		//	ID: userID,
+		//	TasksDatabase: []TasksMark{X},
+		//}
+		//TasksData = append(TasksData, NewTask)
+		X.AddTasks()
+		json.NewEncoder(w).Encode(X)
 	}
 			
 }
+/*
 func Delete(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
