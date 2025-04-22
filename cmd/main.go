@@ -10,10 +10,15 @@ import (
 	//"fmt"
 	"net/http"
 	"github.com/gorilla/mux"
+	//"github.com/shayantrix/task_manager_api/pkg/config"
+	"github.com/shayantrix/task_manager_api/pkg/models"
 	"github.com/shayantrix/task_manager_api/pkg/router"
 )
 
 func main(){
+	//db := config.Connection()
+	models.Init()
+	
 	r := mux.NewRouter()
 	router.RoutingGroup(r)
 	http.Handle("/health", r)

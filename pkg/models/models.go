@@ -1,13 +1,14 @@
 package models 
 
 import(
-	"github.com/shayantrix/task_manager_api/pkg/database"
+	"github.com/shayantrix/task_manager_api/pkg/config"
+	"fmt"
 	"gorm.io/gorm"
 	"github.com/google/uuid"
 )
 
 var (
-	db *gorm.DB
+	DB *gorm.DB
 )
 
 type(
@@ -40,29 +41,36 @@ type(
 )
 
 func Init(){
-	db = config.Connection()
-	db.AutoMigrate(&RegisterData{})
-	db.AutoMigrate(&Tasks{})
-	db.AutoMigrate(&HashedPasswords{})
+	DB = config.Connection()
+	if DB == nil{
+		panic("DB IS not Initialized")
+	}
+	err := DB.AutoMigrate(&RegisterData{}, &Tasks{}, &HashedPasswords{})
+   	if err != nil {
+        	panic("Migration failed: " + err.Error())
+    	}
 }
 
 func (r *RegisterData) AddUser() *RegisterData{
-	db.Create(&r)
+	result := DB.Create(&r)
+	if result.Error != nil{
+		fmt.Println("Error in Registering")
+	}
 	return r
 }
 
 func (h *HashedPasswords) StoreHashPasswords() *HashedPasswords{
-	db.Create(&h)
+	DB.Create(&h)
 	return h
 }
 
 func (r *RegisterData) RetrieveUser(id uuid.UUID) *RegisterData{
-	db.Take(&r, "id=?", id)
+	DB.Take(&r, "id=?", id)
 	return r
 }
 
 func GetAllUsers() []RegisterData {
 	var result []RegisterData
-	db.Table("users").Take(&result)
+	DB.Table("users").Take(&result)
 	return result
 }
