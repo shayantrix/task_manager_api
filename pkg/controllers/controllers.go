@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	//"github.com/shayantrix/task_manager_api/pkg/tokens"
+	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	"github.com/shayantrix/task_manager_api/pkg/models"
 	"github.com/google/uuid"
 	"log"
@@ -16,49 +16,7 @@ import (
 	//"log"
 	//"github.com/gorilla/mux"
 )
-/*
-type RegisterData struct{
-        ID uuid.UUID    `json:"id"`
-        Name string `json:"name"`
-        Email string `json:"email"`
-        Pass string `json:"password"`
-}
 
-type Tasks struct{
-	ID uuid.UUID	`json:"id"`
-	//TaskString []string `json:"task"`
-	TasksDatabase []TasksMark	`json:"tasks"`
-}
-//store tasks data
-var TasksData []Tasks
-
-type SecureAuth struct{
-        Email   string  `json:"email"`
-        Pass  []byte    `json:"-"`
-}
-
-var secureAuth []SecureAuth
-
-
-type DataWithoutPass struct{
-        Name string `json:"name"`
-        Email string `json:"email"`
-}
-*/
-/*type TasksMark struct{
-	TaskString string `json:"task"`
-	Description string `json:"description"`
-	TaskStatus bool	`json:"completed"`
-}
-*/
-//var CompletedTasks []TasksMark
-
-
-//var Data []RegisterData
-
-//var HashedPasswords []byte
-
-//Register handler -> Register(w, r)
 func Register(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	var reg models.RegisterData
@@ -72,6 +30,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 	
 	AllUsers := models.GetAllUsers()
 	for _, item := range AllUsers{
+		fmt.Println(item)
 		if item.Email == reg.Email{
 			http.Error(w, "This email already exists", http.StatusBadRequest)
 			return
@@ -90,41 +49,17 @@ func Register(w http.ResponseWriter, r *http.Request){
 	h.ParentRefer = reg.ID
 
 	models.DB.Create(&h)
-	//h.StoreHashPasswords()
-		
 
-	//Data := reg.RetrieveUser(reg.ID)
-
-	//AllUsers := models.GetAllUsers()
-
-	/*if Data == nil {
-		reg.AddUser()
-	}else{
-		found := false
-
-		for _, v := range AllUsers{
-			if v.Email == reg.Email{
-				http.Error(w, "This email already exists", http.StatusBadRequest)
-				found = true
-			}
-		}
-		if !found{
-                	reg.AddUser()
-                }
-	}*/
 	fmt.Println(reg.ID)
 }
-/*
+
 func GetUsers(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
-	var userResponse []DataWithoutPass
-	for _, v := range Data{
-		userResponse = append(userResponse, DataWithoutPass{
-			Name: v.Name,
-			Email: v.Email,
-		})
+	
+	AllNames := models.GetUsersNames()
+	for _, item := range AllNames{
+		json.NewEncoder(w).Encode(item.Name)
 	}
-	json.NewEncoder(w).Encode(userResponse)
 }
 
 
@@ -132,14 +67,17 @@ func GetUsers(w http.ResponseWriter, r *http.Request){
 	return func(w http.ResponseWriter, r *http.Request){
 	}
 }*/
-/*
+
 func Login(w http.ResponseWriter, r *http.Request){
 	// User should put email and password
 	// We will check whether password matches the hashed one that we have in authentication
 	//If email does not exist Wont move further.
 	w.Header().Set("Content-Type", "application/json")
 	
-	var reg RegisterData
+	var reg struct{
+		Email string	`json:"email"`
+		Pass string	`json:"-"`
+	}
 	body, _ := io.ReadAll(r.Body)
 
 	if err := json.Unmarshal(body, &reg); err != nil{
@@ -147,6 +85,36 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 
 	found := false
+
+	AllUsers := models.GetAllUsers()
+
+	AllHashedPass := models.GetAllPass()
+
+	for _, item := range AllUsers{
+		if item.Email == reg.Email{
+			found = true
+			for _, hash := range AllHashedPass{
+				if err := bcrypt.CompareHashAndPassword(hash.Hashed, []byte(reg.Pass)); err != nil{
+					http.Error(w, "Password does not match!", http.StatusNotFound)
+					fmt.Println(err)
+				}else{
+					token, err := tokens.JWTGenerate(item.ID)
+					if err != nil{
+						log.Fatal("Error in JWT token generation: %s", err)
+					}
+					json.NewEncoder(w).Encode(token)
+					json.NewEncoder(w).Encode(item)
+				}
+			}
+			fmt.Printf("User %s Login seccessfully\n", item.Name)
+		}
+	}
+	if !found{
+		http.Error(w, "Email does not exists!", http.StatusNotFound)
+	}
+}
+
+/*
 
 	for i, item := range Data{		
 		if item.Email == reg.Email{
@@ -169,8 +137,9 @@ func Login(w http.ResponseWriter, r *http.Request){
 	if !found{
 		http.Error(w, "Email does not exists", http.StatusNotFound)
 	}
-}
+*/
 
+/*
 func Test(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userID := r.Context().Value("id")

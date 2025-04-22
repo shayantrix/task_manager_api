@@ -64,6 +64,12 @@ func (h *HashedPasswords) StoreHashPasswords() *HashedPasswords{
 	return h
 }
 
+func GetAllPass() []HashedPasswords{
+	var result []HashedPasswords
+	DB.Distinct("hashed").Find(&result)
+	return result
+}
+
 func (r *RegisterData) RetrieveUser(id uuid.UUID) *RegisterData{
 	DB.Take(&r, "id=?", id)
 	return r
@@ -71,6 +77,14 @@ func (r *RegisterData) RetrieveUser(id uuid.UUID) *RegisterData{
 
 func GetAllUsers() []RegisterData {
 	var result []RegisterData
-	DB.Table("users").Take(&result)
+	DB.Find(&result)
 	return result
 }
+
+func GetUsersNames() []RegisterData{
+	var result []RegisterData
+	DB.Distinct("name").Find(&result)
+	return result
+}
+
+
