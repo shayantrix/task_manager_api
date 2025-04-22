@@ -68,6 +68,18 @@ func Register(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in decoding json file", err)
 	}
 	
+	reg.ID = uuid.New()
+	
+	AllUsers := models.GetAllUsers()
+	for _, item := range AllUsers{
+		if item.Email == reg.Email{
+			http.Error(w, "This email already exists", http.StatusBadRequest)
+			return
+		} 	
+	}
+
+	reg.AddUser()
+	
 	var h models.HashedPasswords
 	var hash_err error
 	h.Hashed, hash_err  =  bcrypt.GenerateFromPassword([]byte(reg.Pass), bcrypt.DefaultCost)
@@ -75,15 +87,17 @@ func Register(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Hashing error: ", hash_err)
 	}
 
-	h.StoreHashPasswords()
-	
-	reg.ID = uuid.New()
+	h.ParentRefer = reg.ID
 
-	Data := reg.RetrieveUser(reg.ID)
+	models.DB.Create(&h)
+	//h.StoreHashPasswords()
+		
 
-	AllUsers := models.GetAllUsers()
+	//Data := reg.RetrieveUser(reg.ID)
 
-	if Data == nil {
+	//AllUsers := models.GetAllUsers()
+
+	/*if Data == nil {
 		reg.AddUser()
 	}else{
 		found := false
@@ -97,7 +111,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 		if !found{
                 	reg.AddUser()
                 }
-	}
+	}*/
 	fmt.Println(reg.ID)
 }
 /*
