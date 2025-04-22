@@ -10,8 +10,8 @@ import(
 var RoutingGroup = func(router *mux.Router){
 	//router.HandleFunc("/health", controllers.Test).Methods("GET")
 	router.HandleFunc("/register", controllers.Register).Methods("POST")
-	//router.HandleFunc("/users", controllers.GetUsers).Methods("GET")
-	//router.HandleFunc("/login", controllers.Login).Methods("POST")
+	router.HandleFunc("/users", controllers.GetUsers).Methods("GET")
+	router.HandleFunc("/login", controllers.Login).Methods("POST")
 	//router.Handle("/protected", middleware.Authentication(http.HandlerFunc(controllers.Test))).Methods("GET")
 	//router.Handle("/protected/taskmanagement/add", middleware.Authorization(http.HandlerFunc(controllers.Add))).Methods("POST")
 	//router.Handle("/protected/taskmanagement/delete", middleware.Authorization(http.HandlerFunc(controllers.Delete))).Methods("POST")
