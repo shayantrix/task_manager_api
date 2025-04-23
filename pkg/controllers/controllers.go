@@ -30,7 +30,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 	
 	AllUsers := models.GetAllUsers()
 	for _, item := range AllUsers{
-		fmt.Println(item)
+		//fmt.Println(item)
 		if item.Email == reg.Email{
 			http.Error(w, "This email already exists", http.StatusBadRequest)
 			return
@@ -74,10 +74,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 	//If email does not exist Wont move further.
 	w.Header().Set("Content-Type", "application/json")
 	
-	var reg struct{
-		Email string	`json:"email"`
-		Pass string	`json:"-"`
-	}
+	var reg models.RegisterData
+
 	body, _ := io.ReadAll(r.Body)
 
 	if err := json.Unmarshal(body, &reg); err != nil{
@@ -104,6 +102,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 					}
 					json.NewEncoder(w).Encode(token)
 					json.NewEncoder(w).Encode(item)
+					break
 				}
 			}
 			fmt.Printf("User %s Login seccessfully\n", item.Name)
@@ -130,14 +129,15 @@ func Add(w http.ResponseWriter, r *http.Request){
 	if !ok {
 		log.Fatal("Error in ID type")
 	}
-	
+
+	X.ParentRefer = userID
+
 	found := false
 	AllTasks := models.GetAllTasks()
 
 	for _, item := range AllTasks{
 		if item.ParentRefer == userID {
 			X.AddTasks()
-			//AllTasks[i]. = append(TasksData[i].TasksDatabase, X)
 			found = true
 			json.NewEncoder(w).Encode(item)
 			break
@@ -145,20 +145,13 @@ func Add(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
-
-	
 	if !found{
-		//NewTask := Tasks{
-		//	ID: userID,
-		//	TasksDatabase: []TasksMark{X},
-		//}
-		//TasksData = append(TasksData, NewTask)
 		X.AddTasks()
 		json.NewEncoder(w).Encode(X)
 	}
 			
 }
-/*
+
 func Delete(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
@@ -166,7 +159,7 @@ func Delete(w http.ResponseWriter, r *http.Request){
         if !ok {
                 log.Fatal("Error in ID type")
         }
-
+	
 	var X struct{
 		DeleteItem string `json:"delete"`
 		//AddItem	string	`json:"add"`
@@ -177,6 +170,17 @@ func Delete(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in receiving user's data: %s", err)
 	}
 	
+	taskToDelete := models.GetTaskByName(X.DeleteItem)
+	taskToDelete.DeleteTaskByName(X.DeleteItem)
+	//if err != nil{
+	//	io.Write(w, err)
+	//	http.Error(w, "Problem in Deleting the task!", http.StatusBadRequest)
+	//}
+	t := models.GetTaskByRefID(userID)
+	
+	json.NewEncoder(w).Encode(t)
+	
+	/*
 	for i, item := range TasksData{
 		if userID == item.ID{
 			for j, task := range item.TasksDatabase{
@@ -191,14 +195,14 @@ func Delete(w http.ResponseWriter, r *http.Request){
 			return
 		}
 	}
-
+	*/
 	//for i, item := range CompletedTasks{
 	//	if userID == item.ID{
 
 
-	http.Error(w, "No task found for this user", http.StatusBadRequest)
+	//http.Error(w, "No task found for this user", http.StatusBadRequest)
 }
-
+/*
 func Update(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")

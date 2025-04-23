@@ -13,8 +13,7 @@ var (
 
 type(
 	RegisterData struct{
-		gorm.Model
-		ID uuid.UUID `gorm:"primaryKey"json:"id"`
+		ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"json:"id"`
                 Name string `json:"name"`
                 Email string `json:"email"`
 		Pass	string	`json:"-"`
@@ -22,19 +21,17 @@ type(
 	}
 
 	Tasks struct{
-		gorm.Model
-		ID uuid.UUID    `gorm:"primaryKey"json:"id"`
+		ID uint    `gorm:"primaryKey;autoIncrement"json:"id"`
 		TaskString string `json:"task"`
         	Description string `json:"description"`
         	TaskStatus bool `json:"completed"`
 		ParentRefer uuid.UUID	//foreign key: used in RegisterData
-		User	RegisterData	`gorm:"foreignKey:ParentRefer"`
+		User	RegisterData	`gorm:"foreignKey:ParentRefer;references:ID"`
 	}
 
 	HashedPasswords struct{
-		gorm.Model
 		ID uint	`gorm:"primaryKey"json:"id"`
-		Hashed	[]byte	`gorm:""json:"-"`
+		Hashed	[]byte	`json:"-"`
 		ParentRefer uuid.UUID	//foreign key: used in RegisterData
 		User	RegisterData	`gorm:"foreignKey:ParentRefer"`
 	}
@@ -60,7 +57,7 @@ func (r *RegisterData) AddUser() *RegisterData{
 }
 
 func (t *Tasks) AddTasks() *Tasks{
-	DB.Select(t.TaskString, t.Description, t.TaskStatus).Create(&t)
+	DB.Create(&t)
 	return t
 }
 
@@ -98,3 +95,22 @@ func GetAllTasks() []Tasks{
 	return result
 }
 
+func GetTaskByName(x string) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_string", x)
+	return t
+}
+
+func (t *Tasks) DeleteTaskByName(x string){
+	DB.Where("task_string", x).Delete(&t)
+	//if t.Error != nil{
+	//	return fmt.Sprintf("Error in deleting the task: %s", t.Error)
+	//}
+	//return nil
+}
+
+func GetTaskByRefID(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "parent_refer = ?", ID)
+	return t
+}
