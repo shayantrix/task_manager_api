@@ -162,7 +162,6 @@ func Delete(w http.ResponseWriter, r *http.Request){
 	
 	var X struct{
 		DeleteItem string `json:"delete"`
-		//AddItem	string	`json:"add"`
 	}
 
 	body, _ := io.ReadAll(r.Body)
@@ -172,37 +171,12 @@ func Delete(w http.ResponseWriter, r *http.Request){
 	
 	taskToDelete := models.GetTaskByName(X.DeleteItem)
 	taskToDelete.DeleteTaskByName(X.DeleteItem)
-	//if err != nil{
-	//	io.Write(w, err)
-	//	http.Error(w, "Problem in Deleting the task!", http.StatusBadRequest)
-	//}
 	t := models.GetTaskByRefID(userID)
 	
 	json.NewEncoder(w).Encode(t)
 	
-	/*
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if task.TaskString == X.DeleteItem {
-					TasksData[i].TasksDatabase = append(item.TasksDatabase[:j], item.TasksDatabase[j+1:]...)
-					fmt.Fprintf(w, "%s is deleted from your task list", X.DeleteItem)
-					json.NewEncoder(w).Encode(TasksData[i])
-					return
-				}
-			}
-			http.Error(w, "Task not found in your task list", http.StatusNotFound)
-			return
-		}
-	}
-	*/
-	//for i, item := range CompletedTasks{
-	//	if userID == item.ID{
-
-
-	//http.Error(w, "No task found for this user", http.StatusBadRequest)
 }
-/*
+
 func Update(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
@@ -227,27 +201,18 @@ func Update(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if task.TaskString == X.OldItem {
-					//TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
-					TasksData[i].TasksDatabase[j].TaskString = X.NewItem
-					TasksData[i].TasksDatabase[j].Description = "Changed the task"
-					TasksData[i].TasksDatabase[j].TaskStatus = false 
-					fmt.Fprintf(w, "'%s' is Changed to '%s'", X.OldItem, X.NewItem)
-					json.NewEncoder(w).Encode(TasksData[i])
-					return
-				}else{
-					http.Error(w, "Task does not exist", http.StatusNotFound)
-				}
-			}
-		}else{
-			http.Error(w, "There is no task for this user", http.StatusNotFound)
-		}
+	
+	taskToUpdate := models.UpdateTask(userID, X.OldItem, X.NewItem)
+	if taskToUpdate.Error != nil {
+		http.Error(w, "Error in updating the task!", http.StatusBadRequest)
+		return
 	}
-}
 
+	t := models.GetTaskByRefID(userID)
+
+	json.NewEncoder(w).Encode(t)
+}
+/*
 func Mark(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	
@@ -284,6 +249,7 @@ func Mark(w http.ResponseWriter, r *http.Request){
 
 }
 
+/*
 func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 

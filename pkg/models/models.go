@@ -103,14 +103,16 @@ func GetTaskByName(x string) *Tasks{
 
 func (t *Tasks) DeleteTaskByName(x string){
 	DB.Where("task_string", x).Delete(&t)
-	//if t.Error != nil{
-	//	return fmt.Sprintf("Error in deleting the task: %s", t.Error)
-	//}
-	//return nil
 }
 
 func GetTaskByRefID(ID uuid.UUID) *Tasks{
 	var t *Tasks
 	DB.First(&t, "parent_refer = ?", ID)
 	return t
+}
+
+func UpdateTask(ID uuid.UUID,delet , add string) *gorm.DB{
+	var t *Tasks
+	result := DB.Model(&t).Where("parent_refer = ?", ID).Where("task_string", delet).Update("task_string", add)
+	return result
 }
