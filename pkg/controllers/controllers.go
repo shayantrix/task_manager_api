@@ -212,7 +212,7 @@ func Update(w http.ResponseWriter, r *http.Request){
 
 	json.NewEncoder(w).Encode(t)
 }
-/*
+
 func Mark(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	
@@ -222,30 +222,41 @@ func Mark(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in userID type")
 	}
 
-	var X TasksMark
+	var X models.Tasks
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
 		log.Fatal("Error in JSON input file: ", err)
 	}
 	//X.Description X.Status
-
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if X.TaskStatus == true && X.TaskString == task.TaskString{
-					TasksData[i].TasksDatabase[j].TaskString = X.TaskString
-					TasksData[i].TasksDatabase[j].Description = X.Description
-					TasksData[i].TasksDatabase[j].TaskStatus = true
-				}
-
-			}
-			json.NewEncoder(w).Encode(TasksData[i])
-		}else{
-			http.Error(w, "There is no task for this user", http.StatusBadRequest)
-			return
-		}
+	
+	//UpdateTask(ID uuid.UUID, name string, description string)
+	taskMarked := models.UpdateTaskMark(userID, X.TaskString, X.Description)
+	if taskMarked.Error != nil{
+		http.Error(w, "Error in marking the task!", http.StatusBadRequest)
+		return
 	}
+	
+	t := models.GetMarkedTasks(userID)
+
+	json.NewEncoder(w).Encode(t)
+
+	//for i, item := range TasksData{
+	//	if userID == item.ID{
+	//		for j, task := range item.TasksDatabase{
+	///			if X.TaskStatus == true && X.TaskString == task.TaskString{
+	//				TasksData[i].TasksDatabase[j].TaskString = X.TaskString
+	//				TasksData[i].TasksDatabase[j].Description = X.Description
+	//				TasksData[i].TasksDatabase[j].TaskStatus = true
+	///			}
+///
+//			}
+//			json.NewEncoder(w).Encode(TasksData[i])
+//		}else{
+//			http.Error(w, "There is no task for this user", http.StatusBadRequest)
+//			return
+//		}
+//	}
 
 }
 

@@ -116,3 +116,15 @@ func UpdateTask(ID uuid.UUID,delet , add string) *gorm.DB{
 	result := DB.Model(&t).Where("parent_refer = ?", ID).Where("task_string", delet).Update("task_string", add)
 	return result
 }
+
+func UpdateTaskMark(ID uuid.UUID, name string, description string) *gorm.DB{
+	var t *Tasks
+	result := DB.Model(&t).Where("parent_refer = ?", ID).Where("task_string", name).Update("description", description).Update("task_status", true)
+	return result
+}
+
+func GetMarkedTasks(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_status = ?", true)
+	return t
+}
