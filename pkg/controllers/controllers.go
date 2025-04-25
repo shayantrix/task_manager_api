@@ -14,7 +14,7 @@ import (
 	//"github.com/shayantrix/task_manager_api/pkg/auth"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
-	//"github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
 func Register(w http.ResponseWriter, r *http.Request){
@@ -30,7 +30,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 	
 	AllUsers := models.GetAllUsers()
 	for _, item := range AllUsers{
-		fmt.Println(item)
+		//fmt.Println(item)
 		if item.Email == reg.Email{
 			http.Error(w, "This email already exists", http.StatusBadRequest)
 			return
@@ -74,10 +74,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 	//If email does not exist Wont move further.
 	w.Header().Set("Content-Type", "application/json")
 	
-	var reg struct{
-		Email string	`json:"email"`
-		Pass string	`json:"-"`
-	}
+	var reg models.RegisterData
+
 	body, _ := io.ReadAll(r.Body)
 
 	if err := json.Unmarshal(body, &reg); err != nil{
@@ -104,6 +102,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 					}
 					json.NewEncoder(w).Encode(token)
 					json.NewEncoder(w).Encode(item)
+					break
 				}
 			}
 			fmt.Printf("User %s Login seccessfully\n", item.Name)
@@ -114,48 +113,12 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-/*
-
-	for i, item := range Data{		
-		if item.Email == reg.Email{
-			found = true
-			if err := auth.CheckHashedPassword(reg.Pass, string(HashedPasswords)); err != nil{
-				http.Error(w, "Password does not match!", http.StatusNotFound)
-				fmt.Println(err)
-			}else{
-				token, err := tokens.JWTGenerate(item.ID)
-       	 			if err != nil {
-                			log.Fatal("Error in jwt token generation: %s", err)
-       				}
-        			json.NewEncoder(w).Encode(token)
-				json.NewEncoder(w).Encode(Data[i])
-			}
-		}
-	//fmt.Printf("token: %s", token)
-	fmt.Printf("User %v Login secssussfully\n", reg.Name)
-	}
-	if !found{
-		http.Error(w, "Email does not exists", http.StatusNotFound)
-	}
-*/
-
-/*
-func Test(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type", "application/json")
-	userID := r.Context().Value("id")
-
-	response := map[string]interface{}{
-		"message": "Xou have accessed a protected route",
-		"user_id": userID,
-	}
-	json.NewEncoder(w).Encode(response)
-}
 
 func Add(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
 	
-	var X TasksMark
+	var X models.Tasks
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
@@ -167,30 +130,28 @@ func Add(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in ID type")
 	}
 
-	found := false
-	for i, item := range TasksData{
-		if item.ID == userID {
+	X.ParentRefer = userID
 
-			TasksData[i].TasksDatabase = append(TasksData[i].TasksDatabase, X)
+	found := false
+	AllTasks := models.GetAllTasks()
+
+	for _, item := range AllTasks{
+		if item.ParentRefer == userID {
+			X.AddTasks()
 			found = true
-			json.NewEncoder(w).Encode(TasksData[i].TasksDatabase)
+			json.NewEncoder(w).Encode(item)
 			break
 			
 		}
 	}
 
-
-	
 	if !found{
-		NewTask := Tasks{
-			ID: userID,
-			TasksDatabase: []TasksMark{X},
-		}
-		TasksData = append(TasksData, NewTask)
-		json.NewEncoder(w).Encode(NewTask)
+		X.AddTasks()
+		json.NewEncoder(w).Encode(X)
 	}
 			
 }
+
 func Delete(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	userIDInterface := r.Context().Value("id")
@@ -198,10 +159,9 @@ func Delete(w http.ResponseWriter, r *http.Request){
         if !ok {
                 log.Fatal("Error in ID type")
         }
-
+	
 	var X struct{
 		DeleteItem string `json:"delete"`
-		//AddItem	string	`json:"add"`
 	}
 
 	body, _ := io.ReadAll(r.Body)
@@ -209,26 +169,12 @@ func Delete(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in receiving user's data: %s", err)
 	}
 	
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if task.TaskString == X.DeleteItem {
-					TasksData[i].TasksDatabase = append(item.TasksDatabase[:j], item.TasksDatabase[j+1:]...)
-					fmt.Fprintf(w, "%s is deleted from your task list", X.DeleteItem)
-					json.NewEncoder(w).Encode(TasksData[i])
-					return
-				}
-			}
-			http.Error(w, "Task not found in your task list", http.StatusNotFound)
-			return
-		}
-	}
-
-	//for i, item := range CompletedTasks{
-	//	if userID == item.ID{
-
-
-	http.Error(w, "No task found for this user", http.StatusBadRequest)
+	taskToDelete := models.GetTaskByName(X.DeleteItem)
+	taskToDelete.DeleteTaskByName(X.DeleteItem)
+	t := models.GetTaskByRefID(userID)
+	
+	json.NewEncoder(w).Encode(t)
+	
 }
 
 func Update(w http.ResponseWriter, r *http.Request){
@@ -255,25 +201,16 @@ func Update(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if task.TaskString == X.OldItem {
-					//TasksData[i].TaskString = append(item.TaskString[:j], item.TaskString[j+1:]...)
-					TasksData[i].TasksDatabase[j].TaskString = X.NewItem
-					TasksData[i].TasksDatabase[j].Description = "Changed the task"
-					TasksData[i].TasksDatabase[j].TaskStatus = false 
-					fmt.Fprintf(w, "'%s' is Changed to '%s'", X.OldItem, X.NewItem)
-					json.NewEncoder(w).Encode(TasksData[i])
-					return
-				}else{
-					http.Error(w, "Task does not exist", http.StatusNotFound)
-				}
-			}
-		}else{
-			http.Error(w, "There is no task for this user", http.StatusNotFound)
-		}
+	
+	taskToUpdate := models.UpdateTask(userID, X.OldItem, X.NewItem)
+	if taskToUpdate.Error != nil {
+		http.Error(w, "Error in updating the task!", http.StatusBadRequest)
+		return
 	}
+
+	t := models.GetTaskByRefID(userID)
+
+	json.NewEncoder(w).Encode(t)
 }
 
 func Mark(w http.ResponseWriter, r *http.Request){
@@ -285,32 +222,27 @@ func Mark(w http.ResponseWriter, r *http.Request){
 		log.Fatal("Error in userID type")
 	}
 
-	var X TasksMark
+	var X models.Tasks
 
 	body, _ := io.ReadAll(r.Body)
 	if err := json.Unmarshal(body, &X); err != nil{
 		log.Fatal("Error in JSON input file: ", err)
 	}
 	//X.Description X.Status
-
-	for i, item := range TasksData{
-		if userID == item.ID{
-			for j, task := range item.TasksDatabase{
-				if X.TaskStatus == true && X.TaskString == task.TaskString{
-					TasksData[i].TasksDatabase[j].TaskString = X.TaskString
-					TasksData[i].TasksDatabase[j].Description = X.Description
-					TasksData[i].TasksDatabase[j].TaskStatus = true
-				}
-
-			}
-			json.NewEncoder(w).Encode(TasksData[i])
-		}else{
-			http.Error(w, "There is no task for this user", http.StatusBadRequest)
-			return
-		}
+	
+	//UpdateTask(ID uuid.UUID, name string, description string)
+	taskMarked := models.UpdateTaskMark(userID, X.TaskString, X.Description)
+	if taskMarked.Error != nil{
+		http.Error(w, "Error in marking the task!", http.StatusBadRequest)
+		return
 	}
+	
+	t := models.GetMarkedTasks(userID)
+
+	json.NewEncoder(w).Encode(t)
 
 }
+
 
 func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
@@ -323,36 +255,16 @@ func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	params := mux.Vars(r)
 	switch X := params["status"]; X{
 	case "completed":
-		for _, item := range TasksData{
-			if userID == item.ID{
-				for j, task := range item.TasksDatabase{
-					if task.TaskStatus == true{
-						json.NewEncoder(w).Encode(item.TasksDatabase[j])
-					}
-				}
-			}else{
-				http.Error(w, "There is no task for this user", http.StatusBadRequest)
-				return
-			}
-		}
+		t := models.GetMarkedTasks(userID)
+		json.NewEncoder(w).Encode(t)
 		w.WriteHeader(http.StatusOK)
 	case "incomplete":
-		for _, item := range TasksData{
-                        if userID == item.ID{
-                                for j, task := range item.TasksDatabase{
-                                        if task.TaskStatus == false{
-                                                json.NewEncoder(w).Encode(item.TasksDatabase[j])
-                                        }
-                                }
-                        }else{
-                                http.Error(w, "There is no task for this user", http.StatusBadRequest)
-                                return
-                        }
-                }
+		incompleteTasks := models.GetIncompleteTasks(userID)
+		json.NewEncoder(w).Encode(incompleteTasks)
 		w.WriteHeader(http.StatusOK)
 	default:
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-}*/
+}

@@ -13,8 +13,7 @@ var (
 
 type(
 	RegisterData struct{
-		gorm.Model
-		ID uuid.UUID `gorm:"primaryKey"json:"id"`
+		ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"json:"id"`
                 Name string `json:"name"`
                 Email string `json:"email"`
 		Pass	string	`json:"-"`
@@ -22,19 +21,17 @@ type(
 	}
 
 	Tasks struct{
-		gorm.Model
-		ID uuid.UUID    `gorm:"primaryKey"json:"id"`
+		ID uint    `gorm:"primaryKey;autoIncrement"json:"id"`
 		TaskString string `json:"task"`
         	Description string `json:"description"`
         	TaskStatus bool `json:"completed"`
 		ParentRefer uuid.UUID	//foreign key: used in RegisterData
-		User	RegisterData	`gorm:"foreignKey:ParentRefer"`
+		User	RegisterData	`gorm:"foreignKey:ParentRefer;references:ID"`
 	}
 
 	HashedPasswords struct{
-		gorm.Model
 		ID uint	`gorm:"primaryKey"json:"id"`
-		Hashed	[]byte	`gorm:""json:"-"`
+		Hashed	[]byte	`json:"-"`
 		ParentRefer uuid.UUID	//foreign key: used in RegisterData
 		User	RegisterData	`gorm:"foreignKey:ParentRefer"`
 	}
@@ -57,6 +54,11 @@ func (r *RegisterData) AddUser() *RegisterData{
 		fmt.Println("Error in Registering")
 	}
 	return r
+}
+
+func (t *Tasks) AddTasks() *Tasks{
+	DB.Create(&t)
+	return t
 }
 
 func (h *HashedPasswords) StoreHashPasswords() *HashedPasswords{
@@ -87,4 +89,49 @@ func GetUsersNames() []RegisterData{
 	return result
 }
 
+func GetAllTasks() []Tasks{
+	var result []Tasks
+	DB.Find(&result)
+	return result
+}
+
+func GetTaskByName(x string) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_string", x)
+	return t
+}
+
+func (t *Tasks) DeleteTaskByName(x string){
+	DB.Where("task_string", x).Delete(&t)
+}
+
+func GetTaskByRefID(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "parent_refer = ?", ID)
+	return t
+}
+
+func UpdateTask(ID uuid.UUID,delet , add string) *gorm.DB{
+	var t *Tasks
+	result := DB.Model(&t).Where("parent_refer = ?", ID).Where("task_string", delet).Update("task_string", add)
+	return result
+}
+
+func UpdateTaskMark(ID uuid.UUID, name string, description string) *gorm.DB{
+	var t *Tasks
+	result := DB.Model(&t).Where("parent_refer = ?", ID).Where("task_string", name).Update("description", description).Update("task_status", true)
+	return result
+}
+
+func GetMarkedTasks(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_status = ?", true)
+	return t
+}
+
+func GetIncompleteTasks(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_status = ?", false)
+	return t
+}
 

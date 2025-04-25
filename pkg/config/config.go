@@ -14,7 +14,7 @@ const (
 	host = "localhost"
 	port = "5432"
 	user = "postgres_test"
-	password = "Mir@ge308"
+	password = "123456m."
 	dbName = "TaskManagement"
 )
 
@@ -27,6 +27,6 @@ func Connection() *gorm.DB{
 	}
 	db = d
 	
-	fmt.Println("DB is connecteddddddddddddddddddddd!")
+	fmt.Println("DB is connected!")
 	return db
 }
