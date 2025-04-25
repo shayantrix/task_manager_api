@@ -128,3 +128,10 @@ func GetMarkedTasks(ID uuid.UUID) *Tasks{
 	DB.First(&t, "task_status = ?", true)
 	return t
 }
+
+func GetIncompleteTasks(ID uuid.UUID) *Tasks{
+	var t *Tasks
+	DB.First(&t, "task_status = ?", false)
+	return t
+}
+

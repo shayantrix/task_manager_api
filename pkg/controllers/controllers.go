@@ -14,7 +14,7 @@ import (
 	//"github.com/shayantrix/task_manager_api/pkg/auth"
 	//"github.com/shayantrix/task_manager_api/pkg/models"
 	//"log"
-	//"github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
 func Register(w http.ResponseWriter, r *http.Request){
@@ -241,26 +241,9 @@ func Mark(w http.ResponseWriter, r *http.Request){
 
 	json.NewEncoder(w).Encode(t)
 
-	//for i, item := range TasksData{
-	//	if userID == item.ID{
-	//		for j, task := range item.TasksDatabase{
-	///			if X.TaskStatus == true && X.TaskString == task.TaskString{
-	//				TasksData[i].TasksDatabase[j].TaskString = X.TaskString
-	//				TasksData[i].TasksDatabase[j].Description = X.Description
-	//				TasksData[i].TasksDatabase[j].TaskStatus = true
-	///			}
-///
-//			}
-//			json.NewEncoder(w).Encode(TasksData[i])
-//		}else{
-//			http.Error(w, "There is no task for this user", http.StatusBadRequest)
-//			return
-//		}
-//	}
-
 }
 
-/*
+
 func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 
@@ -272,36 +255,16 @@ func TaskRetrieval(w http.ResponseWriter, r *http.Request){
 	params := mux.Vars(r)
 	switch X := params["status"]; X{
 	case "completed":
-		for _, item := range TasksData{
-			if userID == item.ID{
-				for j, task := range item.TasksDatabase{
-					if task.TaskStatus == true{
-						json.NewEncoder(w).Encode(item.TasksDatabase[j])
-					}
-				}
-			}else{
-				http.Error(w, "There is no task for this user", http.StatusBadRequest)
-				return
-			}
-		}
+		t := models.GetMarkedTasks(userID)
+		json.NewEncoder(w).Encode(t)
 		w.WriteHeader(http.StatusOK)
 	case "incomplete":
-		for _, item := range TasksData{
-                        if userID == item.ID{
-                                for j, task := range item.TasksDatabase{
-                                        if task.TaskStatus == false{
-                                                json.NewEncoder(w).Encode(item.TasksDatabase[j])
-                                        }
-                                }
-                        }else{
-                                http.Error(w, "There is no task for this user", http.StatusBadRequest)
-                                return
-                        }
-                }
+		incompleteTasks := models.GetIncompleteTasks(userID)
+		json.NewEncoder(w).Encode(incompleteTasks)
 		w.WriteHeader(http.StatusOK)
 	default:
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-}*/
+}
