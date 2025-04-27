@@ -8,8 +8,8 @@ import (
 	"os"
 	"log"
 	//"fmt"
-	"net/http"
-	"github.com/gorilla/mux"
+	//"net/http"
+	//"github.com/gorilla/mux"
 	//"github.com/shayantrix/task_manager_api/pkg/config"
 	"github.com/shayantrix/task_manager_api/pkg/models"
 	"github.com/shayantrix/task_manager_api/pkg/router"
@@ -18,10 +18,11 @@ import (
 func main(){
 	//db := config.Connection()
 	models.Init()
-	
+	/*
 	r := mux.NewRouter()
 	router.RoutingGroup(r)
-	http.Handle("/health", r)
+	*/
+	router.RunRouter()
 	port := os.Getenv("PORT")
 	if port == ""{
 		port = "8080"
@@ -29,6 +30,7 @@ func main(){
 	log.Printf("Server start on port: %s", port)
 	
 	//Serve the server
+	/*
 	server := &http.Server{
 		Addr: ":"+ port,
 		Handler: r,
@@ -36,7 +38,7 @@ func main(){
 
 	if err := server.ListenAndServe(); err != nil{
                         log.Fatal(err)
-        }
+        }*/
 
 	/*
 	go func(){

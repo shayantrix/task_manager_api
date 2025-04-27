@@ -1,13 +1,15 @@
 package middleware
 
-import(
-	"context"
+import (	
+	//"context"
 	"github.com/shayantrix/task_manager_api/pkg/models"
 	"net/http"
+	"fmt"
 	//"github.com/gorilla/mux"
 	//"fmt"
 	"strings"
 	//"strconv"
+	"github.com/gin-gonic/gin"
 	"github.com/shayantrix/task_manager_api/pkg/tokens"
 	//"github.com/golang-jwt/jwt/v5"
 	//"github.com/shayantrix/task_manager_api/pkg/controllers"
@@ -15,6 +17,38 @@ import(
 
 // Define an authentication middleware that protects routes that need authentication
 //next http.Handler
+func Authentication() gin.HandlerFunc {
+	return func(c *gin.Context){
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" {
+         		c.JSON(http.StatusUnauthorized, gin.H{"Error": "Missing authentication token"})
+            		c.Abort()
+            		return
+        	}
+		// The token should be prefixed with "Bearer "
+		tokenParts := strings.Split(tokenString, " ")
+                if len(tokenParts) != 2 || tokenParts [0] != "Bearer" {
+			c.JSON(http.StatusUnauthorized, gin.H{"Error": "Missing authentication token"})
+			c.Abort()
+			return
+                }
+
+		tokenString = tokenParts[1]
+
+                // Have the claims if the token is valid
+                claims, err := tokens.ValidateJWT(tokenString)
+                if err != nil{
+			c.JSON(http.StatusUnauthorized, gin.H{"Error": "Invalid Authentication token"})
+                        c.Abort()
+                        return
+                }
+		c.Set("id", claims.ID)
+		c.Next()
+	}
+}
+
+
+/*
 func Authentication(next http.Handler) http.HandlerFunc{
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 		tokenString := r.Header.Get("Authorization")
@@ -48,7 +82,58 @@ func Authentication(next http.Handler) http.HandlerFunc{
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+*/
 
+func Authorization() gin.HandlerFunc{
+	return func(c *gin.Context){
+                tokenString := c.GetHeader("Authorization")
+                if tokenString == "" {
+                        c.JSON(http.StatusUnauthorized, gin.H{"Error": "Missing authentication token"})
+                        c.Abort()
+                        return
+                }
+                // The token should be prefixed with "Bearer "
+                tokenParts := strings.Split(tokenString, " ")
+                if len(tokenParts) != 2 || tokenParts [0] != "Bearer" {
+                        c.JSON(http.StatusUnauthorized, gin.H{"Error": "Missing authentication token"})
+                        c.Abort()
+                        return
+                }
+
+                tokenString = tokenParts[1]
+
+                // Have the claims if the token is valid
+                claims, err := tokens.ValidateJWT(tokenString)
+                if err != nil{
+                        c.JSON(http.StatusUnauthorized, gin.H{"Error": "Invalid Authentication token"})
+                        c.Abort()
+                        return
+                }
+		found := false
+
+                AllUsers := models.GetAllUsers()
+                for _, item := range AllUsers{
+                        if item.ID == claims.ID{
+                                found = true
+                                break
+                        }
+                }
+
+		if !found{
+                	c.JSON(http.StatusUnauthorized, gin.H{"Error": "Missing user's id"})
+                        c.Abort()
+                        return
+
+		}
+		
+		c.Set("id", claims.ID)
+		fmt.Println(claims.ID)
+		c.Next()
+	}
+}
+
+
+/*
 func Authorization(next http.Handler) http.HandlerFunc{
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 		tokenString := r.Header.Get("Authorization")
@@ -91,7 +176,7 @@ func Authorization(next http.Handler) http.HandlerFunc{
 			}
 		}
 		*/
-
+/*
 		found := false
 
 		AllUsers := models.GetAllUsers()
@@ -120,3 +205,4 @@ func Authorization(next http.Handler) http.HandlerFunc{
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+*/
